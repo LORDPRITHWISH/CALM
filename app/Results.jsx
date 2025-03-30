@@ -1,25 +1,22 @@
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
 
 export default function ResultsScreen() {
   const route = useRoute();
+  const navigation = useNavigation();
   const [expandedSuggestions, setExpandedSuggestions] = useState({});
 
-  // Destructure with default values
   const { rating = 0, traits = [], suggestions = [] } = route.params || {};
 
-  // Calculate percentages
   const ratingPercentage = Math.min(100, rating * 10);
 
-  // Get color based on score
   const getScoreColor = (score) => {
-    if (score >= 8) return '#4CAF50'; // Green
-    if (score >= 6) return '#FFC107'; // Amber
-    return '#F44336'; // Red
+    if (score >= 8) return '#4CAF50';
+    if (score >= 6) return '#FFC107';
+    return '#F44336';
   };
 
-  // Toggle suggestion expansion
   const toggleSuggestion = (index) => {
     setExpandedSuggestions((prev) => ({
       ...prev,
@@ -27,7 +24,6 @@ export default function ResultsScreen() {
     }));
   };
 
-  // Share results
   const shareResults = async () => {
     try {
       await Share.share({
@@ -39,7 +35,14 @@ export default function ResultsScreen() {
     }
   };
 
-  // Get rating description
+  const startChatSession = () => {
+    navigation.navigate('chat', {
+      userId: route.params.userId,
+      traits,
+      initialMessage: "I just saw my assessment results and I'd like to talk about them...",
+    });
+  };
+
   const getRatingDescription = () => {
     if (rating >= 8) return 'Excellent! Keep up the great work!';
     if (rating >= 6) return 'Good job! There are some opportunities for growth.';
@@ -47,90 +50,106 @@ export default function ResultsScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header Section */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Personality Insights</Text>
-      </View>
-
-      {/* Overall Rating Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Overall Well-being Score</Text>
-        <View style={styles.ratingContainer}>
-          <Text style={styles.ratingText}>
-            {rating}
-            <Text style={styles.ratingTotal}>/10</Text>
-          </Text>
-          <View style={styles.ratingBar}>
-            <View
-              style={[
-                styles.ratingFill,
-                {
-                  width: `${ratingPercentage}%`,
-                  backgroundColor: getScoreColor(rating),
-                },
-              ]}
-            />
+    <View style={styles.mainContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.contentContainer}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Your Personality Insights</Text>
           </View>
-          <Text style={styles.ratingDescription}>{getRatingDescription()}</Text>
-        </View>
-      </View>
 
-      {/* Personality Traits Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Key Personality Traits</Text>
-        {traits.map((trait, index) => (
-          <View key={index} style={styles.traitContainer}>
-            <View style={styles.traitHeader}>
-              <Text style={styles.traitName}>{trait.trait}</Text>
-              <Text style={styles.traitScore}>{trait.score}/10</Text>
-            </View>
-            <View style={styles.traitScoreContainer}>
-              <View
-                style={[
-                  styles.traitScoreBar,
-                  {
-                    width: `${trait.score * 10}%`,
-                    backgroundColor: getScoreColor(trait.score),
-                  },
-                ]}
-              />
-            </View>
-          </View>
-        ))}
-      </View>
-
-      {/* Suggestions Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Personalized Suggestions</Text>
-          <TouchableOpacity onPress={shareResults} style={styles.shareButton}>
-            <Text style={styles.shareButtonText}>Share</Text>
-          </TouchableOpacity>
-        </View>
-
-        {suggestions.map((suggestion, index) => (
-          <TouchableOpacity key={index} onPress={() => toggleSuggestion(index)} activeOpacity={0.7}>
-            <View style={styles.suggestionContainer}>
-              <Text style={styles.bullet}>•</Text>
-              <Text
-                style={styles.suggestionText}
-                numberOfLines={expandedSuggestions[index] ? undefined : 2}>
-                {suggestion}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Overall Well-being Score</Text>
+            <View style={styles.ratingContainer}>
+              <Text style={styles.ratingText}>
+                {rating}
+                <Text style={styles.ratingTotal}>/10</Text>
               </Text>
+              <View style={styles.ratingBar}>
+                <View
+                  style={[
+                    styles.ratingFill,
+                    {
+                      width: `${ratingPercentage}%`,
+                      backgroundColor: getScoreColor(rating),
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={styles.ratingDescription}>{getRatingDescription()}</Text>
             </View>
-          </TouchableOpacity>
-        ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Key Personality Traits</Text>
+            {traits.map((trait, index) => (
+              <View key={index} style={styles.traitContainer}>
+                <View style={styles.traitHeader}>
+                  <Text style={styles.traitName}>{trait.trait}</Text>
+                  <Text style={styles.traitScore}>{trait.score}/10</Text>
+                </View>
+                <View style={styles.traitScoreContainer}>
+                  <View
+                    style={[
+                      styles.traitScoreBar,
+                      {
+                        width: `${trait.score * 10}%`,
+                        backgroundColor: getScoreColor(trait.score),
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Personalized Suggestions</Text>
+              <TouchableOpacity onPress={shareResults} style={styles.shareButton}>
+                <Text style={styles.shareButtonText}>Share</Text>
+              </TouchableOpacity>
+            </View>
+
+            {suggestions.map((suggestion, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => toggleSuggestion(index)}
+                activeOpacity={0.7}>
+                <View style={styles.suggestionContainer}>
+                  <Text style={styles.bullet}>•</Text>
+                  <Text
+                    style={styles.suggestionText}
+                    numberOfLines={expandedSuggestions[index] ? undefined : 2}>
+                    {suggestion}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={styles.chatButtonContainer}>
+        <TouchableOpacity style={styles.chatButton} onPress={startChatSession}>
+          <Text style={styles.chatButtonText}>Chat About My Results</Text>
+        </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
+  mainContainer: {
+    flex: 1,
     backgroundColor: '#fff',
-    paddingBottom: 40,
+  },
+  scrollContainer: {
+    paddingBottom: 100,
+  },
+  contentContainer: {
+    padding: 20,
   },
   header: {
     marginBottom: 25,
@@ -247,5 +266,29 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '500',
+  },
+  chatButtonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+  },
+  chatButton: {
+    backgroundColor: '#4A90E2',
+    paddingVertical: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  chatButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

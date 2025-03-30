@@ -11,7 +11,6 @@ import {
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Tts from 'react-native-tts';
 
 const VideoCallUI = () => {
   const [isMuted, setIsMuted] = useState(false);
