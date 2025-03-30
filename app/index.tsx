@@ -26,19 +26,25 @@ export default function App() {
           <TouchableOpacity
             className="rounded-lg bg-blue-500 px-4 py-2"
             onPress={() => router.push('/home')}>
-            <Text className="text-base text-white">home</Text>
+            <Text className="text-base text-white">Home</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             className="rounded-lg bg-blue-500 px-4 py-2"
             onPress={() => router.push('/signin')}>
-            <Text className="text-base text-white">in</Text>
+            <Text className="text-base text-white">LogIn</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             className="rounded-lg bg-blue-500 px-4 py-2"
             onPress={() => router.push('/signup')}>
-            <Text className="text-base text-white">up</Text>
+            <Text className="text-base text-white">SignUp</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="rounded-lg bg-blue-500 px-4 py-2"
+            onPress={() => router.push('/aiui')}>
+            <Text className="text-base text-white">Confarence</Text>
           </TouchableOpacity>
 
           <Image

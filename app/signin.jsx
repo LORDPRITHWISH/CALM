@@ -1,71 +1,118 @@
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Lock, Mail } from 'lucide-react-native';
+import { Mail, Lock, User } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 
-export default function SignInPage() {
+export default function LoginPage() {
+  const navigation = useNavigation();
+  const [loginData, setLoginData] = useState({
+    usernameOrEmail: '',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (name, value) => {
+    setLoginData({
+      ...loginData,
+      [name]: value,
+    });
+  };
+
+  const validateForm = () => {
+    if (!loginData.usernameOrEmail || !loginData.password) {
+      Alert.alert('Error', 'Please enter both username/email and password');
+      return false;
+    }
+    return true;
+  };
+
+  const handleLogin = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('https://m40cw5th-5000.inc1.devtunnels.ms/api/v1/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          // Check if input is email or username
+          [loginData.usernameOrEmail.includes('@') ? 'email' : 'username']:
+            loginData.usernameOrEmail,
+          password: loginData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Successful login
+        Alert.alert('Success', 'Login successful!', [
+          { text: 'OK', onPress: () => navigation.navigate('Home') },
+        ]);
+        // You might want to store the authentication token here
+        // AsyncStorage.setItem('authToken', data.token);
+      } else {
+        Alert.alert('Error', data.message || 'Login failed. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1">
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
           <View className="flex-1 justify-center px-6 py-8">
-            {/* Logo Header */}
+            {/* Header */}
             <View className="mb-10 items-center">
-              {/* <Image
-                source={require('./assets/logo.png')} // Replace with your logo
-                className="mb-4 h-32 w-32"
-              /> */}
               <Text className="text-3xl font-bold text-blue-600">Welcome Back</Text>
               <Text className="mt-2 text-gray-500">Sign in to continue</Text>
             </View>
-
-            {/* Form */}
+            {/* Login Form */}
             <View className="mb-6">
-              {/* Email Input */}
+              {/* Username/Email Input */}
               <View className="mb-4">
-                <Text className="mb-2 text-gray-700">Email</Text>
+                <Text className="mb-2 text-gray-700">Username or Email</Text>
                 <View className="flex-row items-center rounded-lg border border-gray-300 px-4 py-3">
-                  <Mail size={20} color="#64748b" />
+                  {loginData.usernameOrEmail.includes('@') ? (
+                    <Mail size={20} color="#64748b" />
+                  ) : (
+                    <User size={20} color="#64748b" />
+                  )}
                   <TextInput
                     className="ml-3 flex-1 text-gray-700"
-                    placeholder="Enter your email"
+                    placeholder="Enter username or email"
                     placeholderTextColor="#94a3b8"
-                    keyboardType="email-address"
                     autoCapitalize="none"
+                    value={loginData.usernameOrEmail}
+                    onChangeText={(text) => handleChange('usernameOrEmail', text)}
                   />
                 </View>
               </View>
-              {/* <View className="mb-8 flex-row justify-center gap-4">
-              <TouchableOpacity className="rounded-full border border-gray-300 p-3">
-                <Image
-                  source={require('./assets/google.png')} // Replace with your icon
-                  className="h-6 w-6"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity className="rounded-full border border-gray-300 p-3">
-                <Image
-                  source={require('./assets/facebook.png')} // Replace with your icon
-                  className="h-6 w-6"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity className="rounded-full border border-gray-300 p-3">
-                <Image
-                  source={require('./assets/apple.png')} // Replace with your icon
-                  className="h-6 w-6"
-                />
-              </TouchableOpacity>
-            </View> */}
-              Input */}
+
+              {/* Password Input */}
               <View className="mb-6">
                 <Text className="mb-2 text-gray-700">Password</Text>
                 <View className="flex-row items-center rounded-lg border border-gray-300 px-4 py-3">
@@ -75,17 +122,26 @@ export default function SignInPage() {
                     placeholder="Enter your password"
                     placeholderTextColor="#94a3b8"
                     secureTextEntry
+                    value={loginData.password}
+                    onChangeText={(text) => handleChange('password', text)}
                   />
                 </View>
-                <TouchableOpacity className="mt-2 self-end">
+                {/* <TouchableOpacity
+                  className="mt-2 self-end"
+                  onPress={() => navigation.navigate('ForgotPassword')}>
                   <Text className="text-sm text-blue-500">Forgot password?</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
-              {/* Sign In Button */}
+
+              {/* Login Button */}
               <TouchableOpacity
                 className="items-center rounded-lg bg-blue-600 py-4 shadow-md shadow-blue-200"
-                activeOpacity={0.8}>
-                <Text className="text-lg font-semibold text-white">Sign In</Text>
+                activeOpacity={0.8}
+                onPress={handleLogin}
+                disabled={loading}>
+                <Text className="text-lg font-semibold text-white">
+                  {loading ? 'Logging in...' : 'Sign In'}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -96,32 +152,10 @@ export default function SignInPage() {
               <View className="h-px flex-1 bg-gray-300" />
             </View>
 
-            {/* Social Login */}
-            {/* <View className="mb-8 flex-row justify-center gap-4">
-              <TouchableOpacity className="rounded-full border border-gray-300 p-3">
-                <Image
-                  source={require('./assets/google.png')} // Replace with your icon
-                  className="h-6 w-6"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity className="rounded-full border border-gray-300 p-3">
-                <Image
-                  source={require('./assets/facebook.png')} // Replace with your icon
-                  className="h-6 w-6"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity className="rounded-full border border-gray-300 p-3">
-                <Image
-                  source={require('./assets/apple.png')} // Replace with your icon
-                  className="h-6 w-6"
-                />
-              </TouchableOpacity>
-            </View> */}
-
             {/* Sign Up Link */}
             <View className="flex-row justify-center">
               <Text className="text-gray-500">Don't have an account? </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
                 <Text className="font-semibold text-blue-600">Sign Up</Text>
               </TouchableOpacity>
             </View>

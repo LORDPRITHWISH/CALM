@@ -1,4 +1,4 @@
-import { Send, User, Bot, ChevronDown, MoreVertical } from 'lucide-react-native';
+import { Send, User, Bot } from 'lucide-react-native';
 import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
@@ -12,55 +12,22 @@ import {
   ActivityIndicator,
   Keyboard,
   StyleSheet,
-  Animated,
-  Easing,
-  Dimensions,
-  Pressable,
 } from 'react-native';
-
-const { width } = Dimensions.get('window');
 
 export default function ChatScreen() {
   const [messages, setMessages] = useState([
     {
       id: '1',
-      content: "Hello! I'm your AI assistant. How can I help you today?",
+      content: 'Hello! How can I help you today?',
       role: 'assistant',
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [typingIndicator] = useState(new Animated.Value(0));
   const flatListRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Typing animation
-  useEffect(() => {
-    if (isTyping) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(typingIndicator, {
-            toValue: 1,
-            duration: 500,
-            easing: Easing.linear,
-            useNativeDriver: true,
-          }),
-          Animated.timing(typingIndicator, {
-            toValue: 0,
-            duration: 500,
-            easing: Easing.linear,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    } else {
-      typingIndicator.setValue(0);
-    }
-  }, [isTyping]);
-
-  // Keyboard handling
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
       setTimeout(() => {
@@ -83,12 +50,11 @@ export default function ChatScreen() {
     };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+
     setIsLoading(true);
-    setIsTyping(true);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500 + Math.random() * 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const assistantMessage = {
         id: (Date.now() + 1).toString(),
@@ -99,7 +65,6 @@ export default function ChatScreen() {
       setMessages((prev) => [...prev, assistantMessage]);
     } finally {
       setIsLoading(false);
-      setIsTyping(false);
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -108,82 +73,33 @@ export default function ChatScreen() {
 
   const getAIResponse = (userInput) => {
     const responses = [
-      `I understand you're asking about "${userInput}". Can you tell me more?`,
-      `Interesting question about ${userInput}. Here's what I know...`,
-      `Regarding ${userInput}, the information I have suggests...`,
-      `Let me analyze your query about ${userInput}...`,
-      `Thanks for asking about ${userInput}. Here's my response:`,
-      `I've processed your request regarding ${userInput}. Here are the details:`,
+      "I understand you're asking about: " + userInput,
+      "That's an interesting point about " + userInput,
+      'Let me think about ' + userInput,
+      'I can help with ' + userInput,
+      'Thanks for sharing that. What else would you like to know?',
     ];
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const renderMessage = ({ item, index }) => {
+  const renderMessage = ({ item }) => {
     const isUser = item.role === 'user';
-    const showHeader = index === 0 || messages[index - 1].role !== item.role;
 
     return (
       <View
-        style={[
-          styles.messageContainer,
-          isUser ? styles.userMessage : styles.assistantMessage,
-          { marginTop: showHeader ? 12 : 4 },
-        ]}>
-        {showHeader && (
-          <View style={styles.messageHeader}>
-            <View style={[styles.avatar, isUser ? styles.userAvatar : styles.assistantAvatar]}>
-              {isUser ? <User size={14} color="white" /> : <Bot size={14} color="#374151" />}
-            </View>
-            <Text style={[styles.senderText, isUser ? styles.userSender : styles.assistantSender]}>
-              {isUser ? 'You' : 'AI Assistant'}
-            </Text>
-          </View>
-        )}
-        <Text style={isUser ? styles.userText : styles.assistantText}>{item.content}</Text>
-        <View style={styles.messageFooter}>
-          <Text style={[styles.timeText, isUser ? styles.userTime : styles.assistantTime]}>
-            {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </Text>
-          {isUser && (
-            <TouchableOpacity style={styles.messageAction}>
-              <MoreVertical size={14} color={isUser ? '#bfdbfe' : '#6b7280'} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    );
-  };
-
-  const renderTypingIndicator = () => {
-    if (!isTyping) return null;
-
-    return (
-      <View style={[styles.messageContainer, styles.assistantMessage, { marginTop: 4 }]}>
+        style={[styles.messageContainer, isUser ? styles.userMessage : styles.assistantMessage]}>
         <View style={styles.messageHeader}>
-          <View style={[styles.avatar, styles.assistantAvatar]}>
-            <Bot size={14} color="#374151" />
+          <View style={[styles.avatar, isUser ? styles.userAvatar : styles.assistantAvatar]}>
+            {isUser ? <User size={14} color="white" /> : <Bot size={14} color="#374151" />}
           </View>
-          <Text style={[styles.senderText, styles.assistantSender]}>AI Assistant</Text>
+          <Text style={[styles.senderText, isUser ? styles.userSender : styles.assistantSender]}>
+            {isUser ? 'You' : 'AI Assistant'}
+          </Text>
         </View>
-        <View style={styles.typingContainer}>
-          <Animated.View
-            style={[styles.typingDot, { transform: [{ translateY: typingIndicator }] }]}
-          />
-          <Animated.View
-            style={[
-              styles.typingDot,
-              { transform: [{ translateY: typingIndicator }] },
-              { animationDelay: '100ms' },
-            ]}
-          />
-          <Animated.View
-            style={[
-              styles.typingDot,
-              { transform: [{ translateY: typingIndicator }] },
-              { animationDelay: '200ms' },
-            ]}
-          />
-        </View>
+        <Text style={isUser ? styles.userText : styles.assistantText}>{item.content}</Text>
+        <Text style={[styles.timeText, isUser ? styles.userTime : styles.assistantTime]}>
+          {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </Text>
       </View>
     );
   };
@@ -194,18 +110,10 @@ export default function ChatScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}>
-        {/* Header with dropdown */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerDropdown}>
-            <Text style={styles.headerText}>AI Assistant</Text>
-            <ChevronDown size={18} color="#374151" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButton}>
-            <MoreVertical size={20} color="#374151" />
-          </TouchableOpacity>
+          <Text style={styles.headerText}>AI Chat</Text>
         </View>
 
-        {/* Chat messages */}
         <View style={styles.messagesContainer}>
           {messages.length === 0 ? (
             <View style={styles.emptyState}>
@@ -213,7 +121,7 @@ export default function ChatScreen() {
                 <Bot size={32} color="#3b82f6" />
               </View>
               <Text style={styles.emptyTitle}>Welcome to AI Chat</Text>
-              <Text style={styles.emptySubtitle}>Start a conversation with your AI assistant</Text>
+              <Text style={styles.emptySubtitle}>Start a conversation with the AI assistant.</Text>
             </View>
           ) : (
             <FlatList
@@ -223,40 +131,32 @@ export default function ChatScreen() {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.messagesList}
               showsVerticalScrollIndicator={false}
-              ListFooterComponent={renderTypingIndicator}
-              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
             />
           )}
         </View>
 
-        {/* Input area */}
-        <View style={styles.inputWrapper}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              ref={inputRef}
-              style={styles.input}
-              placeholder="Type a message..."
-              placeholderTextColor="#9CA3AF"
-              value={input}
-              onChangeText={setInput}
-              onSubmitEditing={handleSend}
-              multiline
-              maxLength={1000}
-            />
-            <TouchableOpacity
-              onPress={handleSend}
-              style={[styles.sendButton, input.trim() === '' && styles.disabledButton]}
-              disabled={input.trim() === '' || isLoading}>
-              {isLoading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Send size={18} color="white" />
-              )}
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.inputHint}>
-            {input.length > 0 ? `${input.length}/1000` : 'Press enter to send'}
-          </Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            ref={inputRef}
+            style={styles.input}
+            placeholder="Type a message..."
+            placeholderTextColor="#9CA3AF"
+            value={input}
+            onChangeText={setInput}
+            onSubmitEditing={handleSend}
+            multiline
+            maxLength={1000}
+          />
+          <TouchableOpacity
+            onPress={handleSend}
+            style={[styles.sendButton, input.trim() === '' && styles.disabledButton]}
+            disabled={input.trim() === '' || isLoading}>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Send size={18} color="white" />
+            )}
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -273,37 +173,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
-  },
-  headerDropdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    paddingVertical: 8,
+    marginBottom: 8,
   },
   headerText: {
-    fontSize: 18,
-    fontWeight: '600',
+    textAlign: 'center',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#374151',
-    marginRight: 4,
-  },
-  headerButton: {
-    padding: 4,
   },
   messagesContainer: {
     flex: 1,
   },
   messagesList: {
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 100,
   },
   emptyIcon: {
     marginBottom: 16,
@@ -315,42 +205,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#dbeafe',
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
     marginBottom: 8,
-    color: '#374151',
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    maxWidth: 320,
     textAlign: 'center',
     color: '#6b7280',
   },
-  inputWrapper: {
-    marginBottom: Platform.OS === 'ios' ? 16 : 8,
+  emptySubtitle: {
+    maxWidth: 320,
+    textAlign: 'center',
+    color: '#9ca3af',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 24,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: '#d1d5db',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'white',
+    paddingVertical: 4,
+    marginBottom: Platform.OS === 'ios' ? 16 : 8,
   },
   input: {
     flex: 1,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     paddingVertical: 8,
     color: '#374151',
-    maxHeight: 120,
-  },
-  inputHint: {
-    marginTop: 4,
-    marginLeft: 16,
-    fontSize: 12,
-    color: '#9ca3af',
   },
   sendButton: {
     marginLeft: 8,
@@ -365,18 +243,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#93c5fd',
   },
   messageContainer: {
-    padding: 16,
+    padding: 12,
     marginVertical: 4,
     maxWidth: '80%',
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   userMessage: {
     alignSelf: 'flex-end',
@@ -386,10 +256,10 @@ const styles = StyleSheet.create({
   assistantMessage: {
     alignSelf: 'flex-start',
     borderTopLeftRadius: 0,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#e5e7eb',
   },
   messageHeader: {
-    marginBottom: 8,
+    marginBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -408,53 +278,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#d1d5db',
   },
   senderText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   userSender: {
-    color: '#bfdbfe',
+    color: 'white',
   },
   assistantSender: {
-    color: '#4b5563',
+    color: '#374151',
   },
   userText: {
     color: 'white',
-    fontSize: 15,
-    lineHeight: 20,
   },
   assistantText: {
     color: '#374151',
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  messageFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginTop: 8,
   },
   timeText: {
-    fontSize: 11,
-    marginRight: 4,
+    fontSize: 12,
+    marginTop: 4,
+    alignSelf: 'flex-end',
   },
   userTime: {
     color: '#bfdbfe',
   },
   assistantTime: {
-    color: '#9ca3af',
-  },
-  messageAction: {
-    padding: 4,
-  },
-  typingContainer: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-  },
-  typingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#9ca3af',
-    marginHorizontal: 2,
+    color: '#6b7280',
   },
 });
