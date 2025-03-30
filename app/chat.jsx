@@ -1,3 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRoute } from '@react-navigation/native';
+import axios from 'axios';
 import { Send, User, Bot } from 'lucide-react-native';
 import React, { useRef, useState, useEffect } from 'react';
 import {
@@ -12,13 +15,15 @@ import {
   ActivityIndicator,
   Keyboard,
   StyleSheet,
+  Alert,
 } from 'react-native';
 
 export default function ChatScreen() {
+  const route = useRoute();
   const [messages, setMessages] = useState([
     {
       id: '1',
-      content: 'Hello! How can I help you today?',
+      content: "Hello! I'm your emotional support companion. How are you feeling today?",
       role: 'assistant',
       timestamp: new Date(),
     },
@@ -27,6 +32,7 @@ export default function ChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef(null);
   const inputRef = useRef(null);
+  const { userId, traits = [] } = route.params; // Added default empty array for traits
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
@@ -39,6 +45,19 @@ export default function ChatScreen() {
     };
   }, []);
 
+  const getAuthToken = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      return token;
+    } catch (error) {
+      console.error('Error getting token:', error);
+      throw error; // Re-throw to handle in calling function
+    }
+  };
+
   const handleSend = async () => {
     if (input.trim() === '') return;
 
@@ -48,38 +67,83 @@ export default function ChatScreen() {
       role: 'user',
       timestamp: new Date(),
     };
+
+    // Optimistic update
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
-
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const token = await getAuthToken();
+      console.log(input);
+      // Ensure traits is always an array
+      const safeTraits = Array.isArray(traits) ? traits : [];
+
+      const response = await axios.post(
+        'https://m40cw5th-5000.inc1.devtunnels.ms/api/v1/emotional_support_chat',
+        {
+          userId,
+          message: input,
+          traits: safeTraits,
+          chatHistory: messages
+            .filter((m) => m.role === 'user' || m.role === 'assistant')
+            .slice(-5)
+            .map((m) => ({
+              role: m.role,
+              content: m.content,
+              timestamp: m.timestamp,
+            })),
+          isFirstMessage: messages.filter((m) => m.role === 'user').length === 0,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(response);
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || 'Invalid response from server');
+      }
 
       const assistantMessage = {
-        id: (Date.now() + 1).toString(),
-        content: getAIResponse(input),
+        id: `ai-${Date.now()}`,
+        content: response.data.message,
         role: 'assistant',
         timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('API Error:', error);
+
+      // Remove optimistic update
+      setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
+      setInput(userMessage.content);
+
+      // Show appropriate error message
+      let errorMessage = 'Failed to send message';
+      if (error.response) {
+        if (error.response.status === 404) {
+          errorMessage = 'The chat service is currently unavailable';
+        } else {
+          errorMessage = error.response.data?.message || errorMessage;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      Alert.alert('Error', errorMessage, [
+        { text: 'OK', onPress: () => {} },
+        { text: 'Retry', onPress: handleSend },
+      ]);
     } finally {
       setIsLoading(false);
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  };
-
-  const getAIResponse = (userInput) => {
-    const responses = [
-      "I understand you're asking about: " + userInput,
-      "That's an interesting point about " + userInput,
-      'Let me think about ' + userInput,
-      'I can help with ' + userInput,
-      'Thanks for sharing that. What else would you like to know?',
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
   };
 
   const renderMessage = ({ item }) => {
@@ -93,7 +157,7 @@ export default function ChatScreen() {
             {isUser ? <User size={14} color="white" /> : <Bot size={14} color="#374151" />}
           </View>
           <Text style={[styles.senderText, isUser ? styles.userSender : styles.assistantSender]}>
-            {isUser ? 'You' : 'AI Assistant'}
+            {isUser ? 'You' : 'HopeBot'}
           </Text>
         </View>
         <Text style={isUser ? styles.userText : styles.assistantText}>{item.content}</Text>
@@ -111,35 +175,26 @@ export default function ChatScreen() {
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}>
         <View style={styles.header}>
-          <Text style={styles.headerText}>AI Chat</Text>
+          <Text style={styles.headerText}>Emotional Support Companion</Text>
         </View>
 
         <View style={styles.messagesContainer}>
-          {messages.length === 0 ? (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIcon}>
-                <Bot size={32} color="#3b82f6" />
-              </View>
-              <Text style={styles.emptyTitle}>Welcome to AI Chat</Text>
-              <Text style={styles.emptySubtitle}>Start a conversation with the AI assistant.</Text>
-            </View>
-          ) : (
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              renderItem={renderMessage}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.messagesList}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessage}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.messagesList}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          />
         </View>
 
         <View style={styles.inputContainer}>
           <TextInput
             ref={inputRef}
             style={styles.input}
-            placeholder="Type a message..."
+            placeholder="Share how you're feeling..."
             placeholderTextColor="#9CA3AF"
             value={input}
             onChangeText={setInput}
@@ -162,7 +217,6 @@ export default function ChatScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -189,30 +243,7 @@ const styles = StyleSheet.create({
   },
   messagesList: {
     paddingVertical: 10,
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyIcon: {
-    marginBottom: 16,
-    height: 64,
-    width: 64,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 32,
-    backgroundColor: '#dbeafe',
-  },
-  emptyTitle: {
-    marginBottom: 8,
-    textAlign: 'center',
-    color: '#6b7280',
-  },
-  emptySubtitle: {
-    maxWidth: 320,
-    textAlign: 'center',
-    color: '#9ca3af',
+    paddingBottom: 20, // Extra space at bottom
   },
   inputContainer: {
     flexDirection: 'row',

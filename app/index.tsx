@@ -10,13 +10,6 @@ export default function App() {
       <ScrollView className="flex-1">
         <View className="items-center gap-4">
           <Text className="mb-2 text-2xl font-bold">THE INDEX</Text>
-
-          <TouchableOpacity
-            className="rounded-lg bg-blue-500 px-4 py-2"
-            onPress={() => router.push('/aiChat')}>
-            <Text className="text-base text-white">AI</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
             className="rounded-lg bg-blue-500 px-4 py-2"
             onPress={() => router.push('/chat')}>
@@ -39,6 +32,11 @@ export default function App() {
             className="rounded-lg bg-blue-500 px-4 py-2"
             onPress={() => router.push('/signup')}>
             <Text className="text-base text-white">SignUp</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="rounded-lg bg-blue-500 px-4 py-2"
+            onPress={() => router.push('/QuestionScreen')}>
+            <Text className="text-base text-white">Question Screen</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
