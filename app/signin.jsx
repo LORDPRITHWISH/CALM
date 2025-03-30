@@ -1,3 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import { Mail, Lock, User } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -10,13 +14,11 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, Lock, User } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
 
 export default function LoginPage() {
   const navigation = useNavigation();
   const [loginData, setLoginData] = useState({
-    usernameOrEmail: '',
+    email: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ export default function LoginPage() {
   };
 
   const validateForm = () => {
-    if (!loginData.usernameOrEmail || !loginData.password) {
+    if (!loginData.email || !loginData.password) {
       Alert.alert('Error', 'Please enter both username/email and password');
       return false;
     }
@@ -39,37 +41,42 @@ export default function LoginPage() {
   const handleLogin = async () => {
     if (!validateForm()) return;
 
-    setLoading(true);
-
     try {
-      const response = await fetch('https://m40cw5th-5000.inc1.devtunnels.ms/api/v1/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          // Check if input is email or username
-          [loginData.usernameOrEmail.includes('@') ? 'email' : 'username']:
-            loginData.usernameOrEmail,
+      setLoading(true);
+      console.log(loginData);
+      const response = await axios.post(
+        'https://m40cw5th-5000.inc1.devtunnels.ms/api/v1/login',
+        {
+          email: loginData.email,
           password: loginData.password,
-        }),
-      });
+        },
+        { withCredentials: true }
+      );
+      console.log(response);
+      if (response.data && response.data.token) {
+        // Store the token securely
+        await AsyncStorage.setItem('authToken', response.data.token);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // Successful login
         Alert.alert('Success', 'Login successful!', [
-          { text: 'OK', onPress: () => navigation.navigate('Home') },
+          { text: 'OK', onPress: () => navigation.navigate('QuestionScreen') },
         ]);
-        // You might want to store the authentication token here
-        // AsyncStorage.setItem('authToken', data.token);
       } else {
-        Alert.alert('Error', data.message || 'Login failed. Please try again.');
+        Alert.alert('Error', response.data.message || 'Login failed. Please try again.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Network error. Please check your connection and try again.');
-      console.error('Login error:', error);
+      console.log('Login error:', error);
+      let errorMessage = 'Network error. Please check your connection and try again.';
+
+      console.log(error.message);
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        errorMessage = error.response.data.message || 'Invalid credentials. Please try again.';
+      } else if (error.request) {
+        // The request was made but no response was received
+        errorMessage = 'No response from server. Please try again.';
+      }
+
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -96,7 +103,7 @@ export default function LoginPage() {
               <View className="mb-4">
                 <Text className="mb-2 text-gray-700">Username or Email</Text>
                 <View className="flex-row items-center rounded-lg border border-gray-300 px-4 py-3">
-                  {loginData.usernameOrEmail.includes('@') ? (
+                  {loginData.email.includes('@') ? (
                     <Mail size={20} color="#64748b" />
                   ) : (
                     <User size={20} color="#64748b" />
@@ -106,8 +113,9 @@ export default function LoginPage() {
                     placeholder="Enter username or email"
                     placeholderTextColor="#94a3b8"
                     autoCapitalize="none"
-                    value={loginData.usernameOrEmail}
-                    onChangeText={(text) => handleChange('usernameOrEmail', text)}
+                    keyboardType="email-address"
+                    value={loginData.email}
+                    onChangeText={(text) => handleChange('email', text)}
                   />
                 </View>
               </View>
@@ -126,11 +134,6 @@ export default function LoginPage() {
                     onChangeText={(text) => handleChange('password', text)}
                   />
                 </View>
-                {/* <TouchableOpacity
-                  className="mt-2 self-end"
-                  onPress={() => navigation.navigate('ForgotPassword')}>
-                  <Text className="text-sm text-blue-500">Forgot password?</Text>
-                </TouchableOpacity> */}
               </View>
 
               {/* Login Button */}

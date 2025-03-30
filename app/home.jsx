@@ -62,7 +62,7 @@ const VoiceChannelsScreen = () => {
   // User status - would come from your user state management
   const isDepressed = true; // Toggle this for testing different layouts
 
-  const handleJoinChannel = (channelId: number) => {
+  const handleJoinChannel = (channelId) => {
     console.log(`Joining channel ${channelId}`);
     // Add your join channel logic here
   };
@@ -79,7 +79,7 @@ const VoiceChannelsScreen = () => {
     router.navigate('/chat');
   };
 
-  const handleConnectTherapist = (therapistId: number) => {
+  const handleConnectTherapist = (therapistId) => {
     console.log(`Connecting with therapist ${therapistId}`);
     // Navigate to therapist chat/call screen
     router.navigate(`/therapist/${therapistId}`);
