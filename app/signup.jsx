@@ -76,7 +76,7 @@ export default function SignUpPage() {
         role: formData.role,
       };
 
-      const response = await fetch('https://m40cw5th-5000.inc1.devtunnels.ms/api/v1/register', {
+      const response = await fetch('https://calm-backend-m70q.onrender.com/api/v1/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -252,7 +252,7 @@ export default function SignUpPage() {
             {/* Already have an account */}
             <View className="mt-4 flex-row justify-center">
               <Text className="text-gray-500">Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+              <TouchableOpacity onPress={() => navigation.navigate('signin')}>
                 <Text className="font-semibold text-blue-600">Sign In</Text>
               </TouchableOpacity>
             </View>
