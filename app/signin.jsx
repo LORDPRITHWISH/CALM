@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function LoginPage() {
+export default function Signin() {
   const navigation = useNavigation();
   const [loginData, setLoginData] = useState({
     email: '',
@@ -54,7 +54,6 @@ export default function LoginPage() {
       );
       console.log(response);
       if (response.data && response.data.token) {
-        // Store the token securely
         await AsyncStorage.setItem('authToken', response.data.token);
 
         Alert.alert('Success', 'Login successful!', [
@@ -158,7 +157,7 @@ export default function LoginPage() {
             {/* Sign Up Link */}
             <View className="flex-row justify-center">
               <Text className="text-gray-500">Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+              <TouchableOpacity onPress={() => navigation.navigate('signup')}>
                 <Text className="font-semibold text-blue-600">Sign Up</Text>
               </TouchableOpacity>
             </View>

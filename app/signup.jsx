@@ -252,7 +252,7 @@ export default function SignUpPage() {
             {/* Already have an account */}
             <View className="mt-4 flex-row justify-center">
               <Text className="text-gray-500">Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
+              <TouchableOpacity onPress={() => navigation.navigate('signin')}>
                 <Text className="font-semibold text-blue-600">Sign In</Text>
               </TouchableOpacity>
             </View>
