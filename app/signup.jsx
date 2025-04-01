@@ -76,7 +76,7 @@ export default function SignUpPage() {
         role: formData.role,
       };
 
-      const response = await fetch('https://m40cw5th-5000.inc1.devtunnels.ms/api/v1/register', {
+      const response = await fetch('https://calm-backend-m70q.onrender.com/api/v1/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
