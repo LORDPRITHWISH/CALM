@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
   View,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Mail, Lock, Phone } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 
 export default function SignUpPage() {
   const navigation = useNavigation();
@@ -76,25 +77,16 @@ export default function SignUpPage() {
         role: formData.role,
       };
 
-      const response = await fetch('https://calm-backend-m70q.onrender.com/api/v1/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-      console.log(data);
-
-      if (response.ok) {
-        Alert.alert('Success', 'Account created successfully!', [
-          { text: 'OK', onPress: () => navigation.navigate('Home') },
-        ]);
-      } else {
-        Alert.alert('Error', data.message || 'Registration failed. Please try again.');
-      }
+      const response = await axios.post(
+        'https://calm-backend-15wv.onrender.com/api/v1/register',
+        payload
+      );
+      console.log(response.data.user);
+      Alert.alert('Success', `Welcome ${response.data.user.name}!`, [
+        { text: 'OK', onPress: () => navigation.navigate('signin') },
+      ]);
     } catch (error) {
+      console.log(error);
       Alert.alert('Error', 'Network error. Please check your connection and try again.');
       console.error('Registration error:', error);
     } finally {
@@ -220,7 +212,7 @@ export default function SignUpPage() {
                   {/* HEALER Option */}
                   <TouchableOpacity
                     className={`mx-1 flex-1 items-center rounded-lg border py-3 ${formData.role === 'HEALER' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
-                    onPress={() => handleChange('role', 'HEALER')}>
+                    onPress={() => Alert.alert('Success', 'This feature is under development')}>
                     <Text
                       className={`font-medium ${formData.role === 'HEALER' ? 'text-blue-600' : 'text-gray-600'}`}>
                       HEALER

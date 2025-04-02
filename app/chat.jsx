@@ -32,7 +32,7 @@ export default function ChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef(null);
   const inputRef = useRef(null);
-  const { userId, traits = [] } = route.params; // Added default empty array for traits
+  const { userId, traits = [] } = route.params; 
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
@@ -54,7 +54,7 @@ export default function ChatScreen() {
       return token;
     } catch (error) {
       console.error('Error getting token:', error);
-      throw error; // Re-throw to handle in calling function
+      throw error; 
     }
   };
 
@@ -80,7 +80,7 @@ export default function ChatScreen() {
       const safeTraits = Array.isArray(traits) ? traits : [];
 
       const response = await axios.post(
-        'https://m40cw5th-5000.inc1.devtunnels.ms/api/v1/emotional_support_chat',
+        'https://calm-backend-15wv.onrender.com/api/v1/emotional_support_chat',
         {
           userId,
           message: input,
